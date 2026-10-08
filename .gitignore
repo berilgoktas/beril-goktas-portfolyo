@@ -1,0 +1,6 @@
+node_modules
+dist
+cv_text.txt
+berilgoktas_cv_.docx
+*.local
+.DS_Store
