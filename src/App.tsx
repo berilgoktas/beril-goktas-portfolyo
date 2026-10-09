@@ -163,6 +163,7 @@ export default function App() {
       </main>
 
       <footer id="iletisim">
+        <Sky compact />
         <h2>İletişim</h2>
         <ul className="contact-row">
           <li>
@@ -325,7 +326,7 @@ function ProjectCard({
   );
 }
 
-function Sky() {
+function Sky({ compact = false }: { compact?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -334,7 +335,8 @@ function Sky() {
     const context = canvas.getContext("2d");
     if (!context) return;
 
-    const dots = Array.from({ length: 46 }, () => ({
+    const count = compact ? (window.innerWidth < 720 ? 10 : 22) : window.innerWidth < 720 ? 26 : 46;
+    const dots = Array.from({ length: count }, () => ({
       x: Math.random(),
       y: Math.random(),
       vx: (Math.random() - 0.5) * 0.00055,
@@ -345,10 +347,14 @@ function Sky() {
     const draw = () => {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const pixelWidth = Math.round(width * dpr);
+      const pixelHeight = Math.round(height * dpr);
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
       }
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
       context.clearRect(0, 0, width, height);
       for (const dot of dots) {
         dot.x += dot.vx;
@@ -356,13 +362,20 @@ function Sky() {
         if (dot.x < 0 || dot.x > 1) dot.vx *= -1;
         if (dot.y < 0 || dot.y > 1) dot.vy *= -1;
       }
-      for (let i = 0; i < dots.length; i += 1) {
-        for (let j = i + 1; j < dots.length; j += 1) {
-          const dx = (dots[i].x - dots[j].x) * width;
-          const dy = (dots[i].y - dots[j].y) * height;
-          const distance = Math.hypot(dx, dy);
-          if (distance < 150) {
-            context.strokeStyle = `rgba(255,255,255,${(1 - distance / 150) * 0.35})`;
+      const phone = width < 720;
+      const reach = compact
+        ? Math.min(width, height) * 0.28
+        : phone
+          ? Math.min(width, height) * 0.22
+          : 150;
+      if (!(compact && phone)) {
+        for (let i = 0; i < dots.length; i += 1) {
+          for (let j = i + 1; j < dots.length; j += 1) {
+            const dx = (dots[i].x - dots[j].x) * width;
+            const dy = (dots[i].y - dots[j].y) * height;
+            const distance = Math.hypot(dx, dy);
+            if (distance >= reach) continue;
+            context.strokeStyle = `rgba(255,255,255,${(1 - distance / reach) * (compact ? 0.22 : 0.35)})`;
             context.beginPath();
             context.moveTo(dots[i].x * width, dots[i].y * height);
             context.lineTo(dots[j].x * width, dots[j].y * height);
@@ -371,9 +384,10 @@ function Sky() {
         }
       }
       context.fillStyle = "rgba(255,255,255,0.9)";
+      const radius = compact ? 1.6 : phone ? 1.5 : 2.1;
       for (const dot of dots) {
         context.beginPath();
-        context.arc(dot.x * width, dot.y * height, 2.1, 0, Math.PI * 2);
+        context.arc(dot.x * width, dot.y * height, radius, 0, Math.PI * 2);
         context.fill();
       }
       frame = requestAnimationFrame(draw);
@@ -381,7 +395,7 @@ function Sky() {
 
     draw();
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [compact]);
 
   return <canvas ref={ref} className="sky" aria-hidden="true" />;
 }
