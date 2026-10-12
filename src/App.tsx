@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import portrait from "../ben.png";
+import cv from "../berilgoktas_cv_.pdf";
 import {
   education,
   experience,
@@ -73,6 +74,9 @@ export default function App() {
             <MailIcon />
           </a>
         </div>
+        <a className="cv-link" href={cv} download="Beril-Goktas-CV.pdf">
+          CV indir
+        </a>
       </section>
 
       <main>
